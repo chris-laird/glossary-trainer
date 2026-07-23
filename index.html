@@ -198,13 +198,17 @@
   }
   .q-def .lead { font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
     text-transform: uppercase; color: var(--ink-faint); display: block; margin-bottom: 10px; }
+  .q-term { display: block; font-size: clamp(1.5rem, 4.5vw, 2.1rem); font-weight: 800;
+    letter-spacing: -.015em; line-height: 1.1; text-wrap: balance; }
   .options { display: grid; gap: 10px; margin: 16px 0; }
   .opt {
-    text-align: left; font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+    text-align: left; font: inherit; font-size: .98rem; font-weight: 500; line-height: 1.45;
+    cursor: pointer;
     background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink);
-    border-radius: 11px; padding: 14px 16px; display: flex; align-items: center; gap: 13px;
+    border-radius: 11px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 13px;
     transition: border-color .12s, background .12s, transform .08s;
   }
+  .opt .key { margin-top: 1px; }
   .opt:hover:not(:disabled) { border-color: var(--accent); }
   .opt:active:not(:disabled) { transform: translateY(1px); }
   .opt .key { font-family: var(--mono); font-size: 12px; font-weight: 700;
@@ -395,10 +399,10 @@
     <div id="quizLive">
       <div class="card">
         <div class="binlabel">
-          <span class="tag"><span class="chip" id="qNum">1</span> Definition</span>
-          <span id="qOf">Question 1 of 12</span>
+          <span class="tag"><span class="chip" id="qNum">1</span> Term</span>
+          <span id="qOf">Question 1 of 20</span>
         </div>
-        <div class="q-def"><span class="lead">Which term matches this?</span><span id="qDef">—</span></div>
+        <div class="q-def"><span class="lead">Which definition matches this term?</span><span id="qDef" class="q-term">—</span></div>
       </div>
       <div class="options" id="qOptions"></div>
       <div class="feedback" id="qFeedback"></div>
@@ -573,7 +577,7 @@ const S = {
   pos: 0,
   known: new Set(),
   review: new Set(),
-  quiz: { correct: 0, answered: 0, total: 12, seq: [], qi: 0, locked: false }
+  quiz: { correct: 0, answered: 0, total: 20, seq: [], qi: 0, locked: false }
 };
 
 /* ---------- scoreboard ---------- */
@@ -641,7 +645,7 @@ function renderQuestion(){
 
   document.getElementById('qNum').textContent = q.qi+1;
   document.getElementById('qOf').textContent = `Question ${q.qi+1} of ${q.total}`;
-  document.getElementById('qDef').textContent = target.def;
+  document.getElementById('qDef').textContent = target.term;
   document.getElementById('qBar').style.width = (q.qi/q.total*100)+'%';
   document.getElementById('qScore').textContent = `Score ${q.correct} / ${q.answered}`;
 
@@ -650,7 +654,8 @@ function renderQuestion(){
   choices.forEach((c,i)=>{
     const b=document.createElement('button');
     b.className='opt';
-    b.innerHTML = `<span class="key">${LETTERS[i]}</span><span>${c.term}</span>`;
+    b.dataset.id = c.id;
+    b.innerHTML = `<span class="key">${LETTERS[i]}</span><span>${escapeHtml(c.def)}</span>`;
     b.onclick = ()=> answer(b, c.id, box);
     box.appendChild(b);
   });
@@ -663,11 +668,9 @@ function answer(btn, chosenId, box){
   q.locked = true;
   q.answered++;
   const correct = chosenId === q.currentTarget;
-  const targetTerm = TERMS[q.currentTarget].term;
   [...box.children].forEach(b=>{
     b.disabled=true;
-    const term = b.querySelector('span:last-child').textContent;
-    if(term===targetTerm) b.classList.add('correct');
+    if(Number(b.dataset.id)===q.currentTarget) b.classList.add('correct');
     else b.classList.add('dim');
   });
   const fb=document.getElementById('qFeedback');
@@ -680,7 +683,7 @@ function answer(btn, chosenId, box){
     setStreak(0);
     btn.classList.remove('dim'); btn.classList.add('wrong');
     fb.className='feedback show no';
-    fb.innerHTML = `<b>Not quite.</b> The answer is <b>${targetTerm}</b>.`;
+    fb.innerHTML = `<b>Not quite.</b> The correct definition is highlighted in green.`;
   }
   document.getElementById('qScore').textContent = `Score ${q.correct} / ${q.answered}`;
   document.getElementById('qBar').style.width = ((q.qi+1)/q.total*100)+'%';
