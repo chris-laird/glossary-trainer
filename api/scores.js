@@ -1,39 +1,28 @@
 // Vercel Serverless Function — GET/POST /api/scores
-// Shared leaderboard backed by Upstash Redis via its REST API (no npm deps).
-//
-// Reads credentials from env vars set by the Upstash/Vercel integration.
-// It accepts either the Upstash names or the legacy Vercel KV names:
-//   UPSTASH_REDIS_REST_URL   / UPSTASH_REDIS_REST_TOKEN
-//   KV_REST_API_URL          / KV_REST_API_TOKEN
+// Shared leaderboard backed by Upstash Redis via the REDIS_URL connection string.
+
+import Redis from "ioredis";
 
 const KEY = "board";
 const MAX = 100; // keep the top 100 runs
 
-function creds() {
-  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-  return { url, token };
-}
-
-// Run one Redis command through the Upstash REST endpoint.
-async function redis(command) {
-  const { url, token } = creds();
-  if (!url || !token) throw new Error("missing-redis-env");
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
-    body: JSON.stringify(command),
-  });
-  if (!r.ok) throw new Error("redis-http-" + r.status);
-  const data = await r.json();
-  return data.result;
+let client;
+function getClient() {
+  if (!process.env.REDIS_URL) throw new Error("missing-redis-env");
+  if (!client) {
+    client = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: 3,
+      enableAutoPipelining: true,
+    });
+  }
+  return client;
 }
 
 const sortBoard = (list) =>
   list.slice().sort((a, b) => b.pct - a.pct || b.correct - a.correct || b.ts - a.ts);
 
 async function readBoard() {
-  const raw = await redis(["GET", KEY]);
+  const raw = await getClient().get(KEY);
   try {
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
@@ -67,7 +56,7 @@ export default async function handler(req, res) {
       const board = await readBoard();
       board.push(entry);
       const top = sortBoard(board).slice(0, MAX);
-      await redis(["SET", KEY, JSON.stringify(top)]);
+      await getClient().set(KEY, JSON.stringify(top));
       return res.status(200).json({ board: top, ts: entry.ts });
     }
 
@@ -77,7 +66,7 @@ export default async function handler(req, res) {
     const missing = e && e.message === "missing-redis-env";
     return res.status(500).json({
       error: missing
-        ? "Redis env vars not found. Connect Upstash Redis in the Vercel Storage tab (or set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN), then redeploy."
+        ? "REDIS_URL not found. It should be provided by the Upstash integration in Vercel."
         : "Server error talking to the leaderboard store.",
     });
   }
