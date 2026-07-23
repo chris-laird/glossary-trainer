@@ -2,5 +2,8 @@
   "private": true,
   "name": "glossary-trainer",
   "version": "1.0.0",
-  "description": "Tightly Glossary Trainer with a shared team leaderboard"
+  "description": "Tightly Glossary Trainer with a shared team leaderboard",
+  "dependencies": {
+    "ioredis": "^5.4.1"
+  }
 }
