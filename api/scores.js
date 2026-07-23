@@ -67,6 +67,15 @@ export default async function handler(req, res) {
       const entry = { name, pct, correct, total, ms, ts: Date.now() };
 
       const board = await readBoard();
+      // One entry per player: reject a name already on the board
+      // (case-insensitive, whitespace-trimmed).
+      const norm = (s) => String(s).trim().toLowerCase();
+      if (board.some((e) => norm(e.name) === norm(name))) {
+        return res.status(409).json({
+          duplicate: true,
+          error: `"${name}" is already on the leaderboard. Each player posts once — use a different name if this isn't you.`,
+        });
+      }
       board.push(entry);
       const top = sortBoard(board).slice(0, MAX);
       await getClient().set(KEY, JSON.stringify(top));

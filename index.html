@@ -790,6 +790,15 @@ document.getElementById('qSaveBtn').onclick = async ()=>{
       method:'POST', headers:{ 'content-type':'application/json' },
       body: JSON.stringify({ name, pct:q.pending.pct, correct:q.pending.correct, total:q.pending.total, ms:q.pending.ms })
     });
+    if(r.status===409){
+      const d = await r.json().catch(()=>({}));
+      note.style.display='block'; note.className='saved-note plain';
+      note.textContent = d.error || `"${name}" is already on the leaderboard — enter a different name.`;
+      document.getElementById('qInitials').focus();
+      document.getElementById('qInitials').select();
+      btn.disabled=false; btn.textContent='Save to leaderboard';
+      return;
+    }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data = await r.json();
     const board = data.board || [];
