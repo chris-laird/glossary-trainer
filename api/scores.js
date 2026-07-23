@@ -73,15 +73,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ board: top, ts: entry.ts });
     }
 
-    // TEMPORARY one-time reset — removed immediately after use.
-    if (req.method === "DELETE") {
-      if (!req.query || req.query.token !== "reset-Kd9v2Qx7") {
-        return res.status(403).json({ error: "Forbidden." });
-      }
-      await getClient().del(KEY);
-      return res.status(200).json({ ok: true, cleared: true });
-    }
-
     res.setHeader("allow", "GET, POST");
     return res.status(405).json({ error: "Method not allowed." });
   } catch (e) {
