@@ -1,0 +1,845 @@
+<title>Tightly Glossary Trainer</title>
+<style>
+  :root {
+    --paper: #F4F5F1;
+    --surface: #FCFCFA;
+    --surface-2: #EDEFEA;
+    --ink: #16211E;
+    --ink-soft: #566762;
+    --ink-faint: #8A968F;
+    --line: #DCE1D9;
+    --line-strong: #C7CEC4;
+    --accent: #0E7C82;
+    --accent-ink: #0A5C61;
+    --accent-wash: #E2F0F0;
+    --good: #2F8F5B;
+    --good-wash: #E3F1E8;
+    --bad: #C24A3C;
+    --bad-wash: #F6E5E2;
+    --warn: #B77A12;
+    --shadow: 0 1px 2px rgba(22,33,30,.06), 0 8px 24px -12px rgba(22,33,30,.18);
+    --shadow-lift: 0 2px 4px rgba(22,33,30,.08), 0 18px 40px -16px rgba(22,33,30,.28);
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", monospace;
+    --r: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0F1618;
+      --surface: #16201F;
+      --surface-2: #1D2827;
+      --ink: #EAF0EC;
+      --ink-soft: #9CABA5;
+      --ink-faint: #6B7A74;
+      --line: #26312F;
+      --line-strong: #34413E;
+      --accent: #38B6AF;
+      --accent-ink: #6ED2CB;
+      --accent-wash: #12302F;
+      --good: #4DB47C;
+      --good-wash: #14301F;
+      --bad: #E07567;
+      --bad-wash: #351C18;
+      --warn: #D6A23F;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+      --shadow-lift: 0 2px 6px rgba(0,0,0,.35), 0 22px 46px -18px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #F4F5F1; --surface: #FCFCFA; --surface-2: #EDEFEA; --ink: #16211E;
+    --ink-soft: #566762; --ink-faint: #8A968F; --line: #DCE1D9; --line-strong: #C7CEC4;
+    --accent: #0E7C82; --accent-ink: #0A5C61; --accent-wash: #E2F0F0;
+    --good: #2F8F5B; --good-wash: #E3F1E8; --bad: #C24A3C; --bad-wash: #F6E5E2; --warn: #B77A12;
+    --shadow: 0 1px 2px rgba(22,33,30,.06), 0 8px 24px -12px rgba(22,33,30,.18);
+    --shadow-lift: 0 2px 4px rgba(22,33,30,.08), 0 18px 40px -16px rgba(22,33,30,.28);
+  }
+  :root[data-theme="dark"] {
+    --paper: #0F1618; --surface: #16201F; --surface-2: #1D2827; --ink: #EAF0EC;
+    --ink-soft: #9CABA5; --ink-faint: #6B7A74; --line: #26312F; --line-strong: #34413E;
+    --accent: #38B6AF; --accent-ink: #6ED2CB; --accent-wash: #12302F;
+    --good: #4DB47C; --good-wash: #14301F; --bad: #E07567; --bad-wash: #351C18; --warn: #D6A23F;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+    --shadow-lift: 0 2px 6px rgba(0,0,0,.35), 0 22px 46px -18px rgba(0,0,0,.7);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  /* ---------- Header ---------- */
+  header { position: relative; margin-bottom: 22px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--accent-ink); font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .eyebrow::before {
+    content: ""; width: 22px; height: 2px; background: var(--accent); display: inline-block;
+  }
+  h1 {
+    font-size: clamp(1.9rem, 5vw, 2.7rem);
+    line-height: 1.02; margin: 10px 0 6px; letter-spacing: -.02em;
+    font-weight: 800; text-wrap: balance;
+  }
+  .tagline { color: var(--ink-soft); font-size: .96rem; max-width: 52ch; margin: 0; }
+  .spark { position: absolute; right: 0; top: 4px; width: 132px; height: 52px; opacity: .9; }
+  @media (max-width: 560px) { .spark { display: none; } }
+
+  /* ---------- Scoreboard ---------- */
+  .board {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    background: var(--line); border: 1px solid var(--line);
+    border-radius: var(--r); overflow: hidden; margin: 22px 0;
+    box-shadow: var(--shadow);
+  }
+  .stat { background: var(--surface); padding: 12px 14px; }
+  .stat .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-faint); }
+  .stat .v { font-family: var(--mono); font-size: 1.55rem; font-weight: 600;
+    line-height: 1.1; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: .8rem; color: var(--ink-faint); font-weight: 500; }
+  .stat.hot .v { color: var(--accent-ink); }
+
+  /* ---------- Mode toggle ---------- */
+  .modes {
+    display: inline-flex; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 20px;
+  }
+  .modes button {
+    font: inherit; font-size: .9rem; font-weight: 600; border: 0; cursor: pointer;
+    background: transparent; color: var(--ink-soft); padding: 7px 16px; border-radius: 7px;
+    display: flex; align-items: center; gap: 7px; transition: background .15s, color .15s;
+  }
+  .modes button[aria-selected="true"] {
+    background: var(--surface); color: var(--ink); box-shadow: var(--shadow);
+  }
+  .modes button svg { width: 15px; height: 15px; }
+
+  /* ---------- Card base ---------- */
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .binlabel {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 16px; border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+    font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--ink-faint);
+  }
+  .binlabel .tag {
+    display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+  }
+  .chip {
+    display: inline-block; min-width: 18px; text-align: center;
+    background: var(--accent); color: #fff; border-radius: 5px;
+    padding: 1px 6px; font-weight: 700; font-size: 11px;
+  }
+  :root[data-theme="dark"] .chip, @media (prefers-color-scheme: dark) { }
+
+  /* ---------- Flashcard ---------- */
+  #flashPane { display: none; }
+  .flip { cursor: pointer; margin-bottom: 16px; }
+  .flip-inner { display: flex; flex-direction: column; min-height: 300px; }
+  /* Show exactly one face; swap on .flipped. No 3D transform, so it can't
+     collapse inside the card's overflow:hidden the way a rotate would. */
+  .face { display: none; flex: 1 1 auto; flex-direction: column;
+    animation: faceIn .32s ease both; }
+  .face.front { display: flex; }
+  .flip.flipped .face.front { display: none; }
+  .flip.flipped .face.back { display: flex; }
+  @keyframes faceIn { from { opacity: 0; transform: translateY(8px) scale(.995); }
+    to { opacity: 1; transform: none; } }
+  .face-body {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+    padding: 32px 30px; gap: 14px;
+  }
+  .term-word { font-size: clamp(1.5rem, 4.5vw, 2.1rem); font-weight: 800;
+    letter-spacing: -.015em; line-height: 1.08; text-wrap: balance; }
+  .def-text { font-size: 1.06rem; color: var(--ink); line-height: 1.55; }
+  .back .term-word { font-size: 1.15rem; color: var(--accent-ink); }
+  .prompt-hint { font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-faint); }
+  .flip-fab {
+    align-self: flex-start; font-family: var(--mono); font-size: 11px;
+    color: var(--ink-faint); letter-spacing: .06em;
+  }
+
+  .flash-actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+  .nav-btn {
+    font: inherit; font-weight: 600; font-size: .9rem; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink);
+    border-radius: 10px; padding: 11px 14px; transition: border-color .15s, background .15s;
+  }
+  .nav-btn:hover { border-color: var(--accent); }
+  .verdict { display: flex; gap: 10px; }
+  .verdict button {
+    flex: 1; font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer;
+    border-radius: 10px; padding: 11px 10px; border: 1px solid; transition: transform .1s, filter .15s;
+  }
+  .verdict button:active { transform: translateY(1px); }
+  .btn-review { background: var(--bad-wash); border-color: transparent; color: var(--bad); }
+  .btn-known { background: var(--good-wash); border-color: transparent; color: var(--good); }
+  .counter { font-family: var(--mono); font-size: .82rem; color: var(--ink-faint);
+    text-align: center; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Quiz ---------- */
+  #quizPane { display: none; }
+  .q-def {
+    font-size: 1.12rem; line-height: 1.55; padding: 26px 26px 22px;
+  }
+  .q-def .lead { font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-faint); display: block; margin-bottom: 10px; }
+  .options { display: grid; gap: 10px; margin: 16px 0; }
+  .opt {
+    text-align: left; font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink);
+    border-radius: 11px; padding: 14px 16px; display: flex; align-items: center; gap: 13px;
+    transition: border-color .12s, background .12s, transform .08s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt:active:not(:disabled) { transform: translateY(1px); }
+  .opt .key { font-family: var(--mono); font-size: 12px; font-weight: 700;
+    width: 24px; height: 24px; flex: none; display: grid; place-items: center;
+    border-radius: 6px; background: var(--surface-2); color: var(--ink-soft); }
+  .opt.correct { border-color: var(--good); background: var(--good-wash); color: var(--good); }
+  .opt.correct .key { background: var(--good); color: #fff; }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-wash); color: var(--bad); }
+  .opt.wrong .key { background: var(--bad); color: #fff; }
+  .opt.dim { opacity: .5; }
+  .opt:disabled { cursor: default; }
+  .feedback {
+    min-height: 46px; padding: 12px 16px; border-radius: 10px; font-size: .92rem;
+    display: none; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: var(--good-wash); color: var(--good); }
+  .feedback.no { background: var(--bad-wash); color: var(--bad); }
+  .feedback b { font-weight: 700; }
+  .q-foot { display: flex; justify-content: space-between; align-items: center; }
+  .progress { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden;
+    margin-bottom: 18px; border: 1px solid var(--line); }
+  .progress > i { display: block; height: 100%; background: var(--accent);
+    border-radius: 99px; transition: width .4s cubic-bezier(.2,.7,.2,1); width: 0; }
+  .cta {
+    font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer;
+    background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 22px;
+    transition: filter .15s, transform .08s;
+  }
+  .cta:hover { filter: brightness(1.06); }
+  .cta:active { transform: translateY(1px); }
+  .cta.ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line-strong); }
+
+  /* summary */
+  .summary { text-align: center; padding: 40px 26px; }
+  .summary .big { font-family: var(--mono); font-size: 3.2rem; font-weight: 600;
+    line-height: 1; font-variant-numeric: tabular-nums; }
+  .summary .grade { font-family: var(--mono); font-size: 12px; letter-spacing: .12em;
+    text-transform: uppercase; margin: 8px 0 4px; font-weight: 700; }
+  .summary p { color: var(--ink-soft); margin: 4px 0 22px; }
+
+  footer { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; letter-spacing: .04em; }
+  footer a { color: var(--accent-ink); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 560px) {
+    .board { grid-template-columns: repeat(2, 1fr); }
+    .board .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  }
+
+  /* ---------- Leaderboard ---------- */
+  #boardPane { display: none; }
+  .lb-wrap { padding: 6px 0 4px; }
+  table.lb { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  table.lb th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600; text-align: left; padding: 6px 16px 10px;
+  }
+  table.lb th.num, table.lb td.num { text-align: right; }
+  table.lb td { padding: 12px 16px; border-top: 1px solid var(--line); font-size: .96rem; }
+  table.lb tr:first-child td { border-top: 0; }
+  .rank { font-family: var(--mono); font-weight: 700; color: var(--ink-faint); width: 34px; }
+  .rank.medal { color: #fff; }
+  .rank-badge {
+    display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 7px;
+    font-size: 12px; font-weight: 700;
+  }
+  .rank-1 .rank-badge { background: var(--accent); color: #fff; }
+  .rank-2 .rank-badge { background: var(--ink-soft); color: var(--paper); }
+  .rank-3 .rank-badge { background: var(--warn); color: #fff; }
+  .who { font-weight: 700; font-family: var(--mono); letter-spacing: .04em; }
+  .pct { font-family: var(--mono); font-weight: 700; }
+  .pct.good { color: var(--good); } .pct.mid { color: var(--warn); } .pct.low { color: var(--bad); }
+  .lb-sub { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  tr.you { background: var(--accent-wash); }
+  tr.you .who::after { content: " · you"; color: var(--accent-ink); font-weight: 600; font-size: 11px; letter-spacing: .06em; }
+  .lb-empty { padding: 40px 26px; text-align: center; color: var(--ink-soft); }
+  .lb-empty .mono { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+
+  /* save-run row on quiz summary */
+  .save-row {
+    display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;
+    margin: 0 0 20px; padding: 16px; background: var(--surface-2);
+    border: 1px dashed var(--line-strong); border-radius: 12px;
+  }
+  .save-row label { font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--ink-soft); }
+  .save-row input {
+    font: inherit; font-weight: 600; padding: 9px 12px; border-radius: 9px;
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+    width: 150px; text-align: center;
+  }
+  .save-row input:focus { border-color: var(--accent); outline: none; }
+  .saved-note { font-size: .9rem; color: var(--good); font-weight: 600; margin: 0 0 20px; }
+  .saved-note.plain { color: var(--ink-soft); font-weight: 500; }
+</style>
+
+<div class="wrap">
+  <header>
+    <svg class="spark" viewBox="0 0 132 52" fill="none" aria-hidden="true">
+      <polyline id="sparkA" points="" fill="none" stroke="var(--line-strong)" stroke-width="1.5"/>
+      <polyline id="sparkB" points="" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <circle id="sparkDot" r="3" fill="var(--accent)"/>
+    </svg>
+    <div class="eyebrow">Demand &amp; Inventory · Study deck</div>
+    <h1>Glossary Trainer</h1>
+    <p class="tagline">Drill the language of forecasting, replenishment, and merchandise planning — one SKU of vocabulary at a time.</p>
+  </header>
+
+  <div class="board" id="board">
+    <div class="stat"><div class="k">Deck</div><div class="v" id="sDeck">0</div></div>
+    <div class="stat"><div class="k">Mastered</div><div class="v" id="sMastered">0<small> / 0</small></div></div>
+    <div class="stat"><div class="k">Quiz accuracy</div><div class="v" id="sAcc">—</div></div>
+    <div class="stat hot"><div class="k">Streak</div><div class="v" id="sStreak">0<small> velocity</small></div></div>
+  </div>
+
+  <div class="modes" role="tablist" aria-label="Study mode">
+    <button role="tab" id="tabFlash" aria-selected="true" aria-controls="flashPane">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+      Flashcards
+    </button>
+    <button role="tab" id="tabQuiz" aria-selected="false" aria-controls="quizPane">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Recall Quiz
+    </button>
+    <button role="tab" id="tabBoard" aria-selected="false" aria-controls="boardPane">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V4h12v5a6 6 0 0 1-12 0Z"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3M9 21h6M12 15v6"/></svg>
+      Leaderboard
+    </button>
+  </div>
+
+  <!-- FLASHCARDS -->
+  <section id="flashPane" style="display:block">
+    <div class="flip" id="flip">
+      <div class="card flip-inner">
+        <div class="face front">
+          <div class="binlabel">
+            <span class="tag"><span class="chip" id="fLetterF">A</span> Term</span>
+            <span id="fIndexF">01 / 91</span>
+          </div>
+          <div class="face-body">
+            <div class="prompt-hint">What does this mean?</div>
+            <div class="term-word" id="fTerm">—</div>
+            <div class="flip-fab">▸ tap to reveal definition</div>
+          </div>
+        </div>
+        <div class="face back">
+          <div class="binlabel">
+            <span class="tag"><span class="chip" id="fLetterB">A</span> Definition</span>
+            <span id="fIndexB">01 / 91</span>
+          </div>
+          <div class="face-body">
+            <div class="term-word" id="fTermBack">—</div>
+            <div class="def-text" id="fDef">—</div>
+            <div class="flip-fab">▸ tap to see term</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="counter" id="fCounter"></div>
+    <div style="height:12px"></div>
+    <div class="flash-actions">
+      <button class="nav-btn" id="fPrev">← Prev</button>
+      <div class="verdict">
+        <button class="btn-review" id="fReview">Study again</button>
+        <button class="btn-known" id="fKnown">Got it ✓</button>
+      </div>
+      <button class="nav-btn" id="fNext">Next →</button>
+    </div>
+    <div style="height:14px"></div>
+    <div class="q-foot">
+      <button class="cta ghost" id="fShuffle">↻ Shuffle deck</button>
+      <button class="cta ghost" id="fReset">Reset progress</button>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quizPane">
+    <div class="progress"><i id="qBar"></i></div>
+    <div id="quizLive">
+      <div class="card">
+        <div class="binlabel">
+          <span class="tag"><span class="chip" id="qNum">1</span> Definition</span>
+          <span id="qOf">Question 1 of 12</span>
+        </div>
+        <div class="q-def"><span class="lead">Which term matches this?</span><span id="qDef">—</span></div>
+      </div>
+      <div class="options" id="qOptions"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="q-foot">
+        <span class="counter" id="qScore">Score 0</span>
+        <button class="cta" id="qNext" style="display:none">Next question →</button>
+      </div>
+    </div>
+
+    <div class="card summary" id="quizDone" style="display:none">
+      <div class="grade" id="qGrade">RESULT</div>
+      <div class="big" id="qFinal">0%</div>
+      <p id="qMsg"></p>
+      <div class="save-row" id="qSave">
+        <label for="qInitials">Log this run</label>
+        <input id="qInitials" maxlength="24" placeholder="Your name" autocomplete="off" spellcheck="false" />
+        <button class="cta" id="qSaveBtn">Save to leaderboard</button>
+      </div>
+      <p class="saved-note" id="qSavedNote" style="display:none"></p>
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap">
+        <button class="cta" id="qAgain">New quiz round</button>
+        <button class="cta ghost" id="qViewBoard">View leaderboard</button>
+        <button class="cta ghost" id="qToFlash">Review flashcards</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section id="boardPane">
+    <div class="card">
+      <div class="binlabel">
+        <span class="tag"><span class="chip">★</span> Team leaderboard</span>
+        <span id="lbCount">—</span>
+      </div>
+      <div class="lb-wrap" id="lbBody"></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="q-foot">
+      <span class="counter">Ranked by accuracy, then most recent · shared across your team</span>
+      <button class="cta ghost" id="lbRefresh">↻ Refresh</button>
+    </div>
+  </section>
+
+  <footer>
+    <span>91 terms · Tightly knowledge base</span>
+    <a href="https://knowledge.tightly.io/en/articles/16052675-glossary-of-terms" target="_blank" rel="noopener">Source glossary ↗</a>
+  </footer>
+</div>
+
+<script>
+const TERMS = [
+ ["ABC / XYZ Analysis","A two-way SKU segmentation — ABC by value contribution, XYZ by demand variability — used to apply different planning policies to high-value/steady vs low-value/erratic items."],
+ ["Assembly","A finished good that must be built or kitted from component items before it can be sold, tracked via a bill of materials."],
+ ["Available to Sell","Units in stock that are not already allocated or committed to open orders, and are free to be sold."],
+ ["Backorder","Demand that has been accepted but not yet fulfilled because the item was out of stock, to be shipped once replenished — as opposed to a lost sale, where the customer walks away."],
+ ["Baselining","The process of establishing a forecast starting point for a new or replacement product using the historical sales data of a related predecessor product."],
+ ["Batch Size","The fixed quantity increment in which a product must be produced or ordered."],
+ ["BOM (Bill of Materials)","The list of component items and quantities required to build one unit of an assembly."],
+ ["Bundles / Kits","A group of individual SKUs sold together as a single sellable unit, without requiring pre-assembly into a new physical product."],
+ ["Cannibalization","When a new or promoted product captures demand that would otherwise have gone to an existing one, so the incremental gain is smaller than the headline sales suggest."],
+ ["Case Pack","The fixed number of units contained in a single case or carton as sold by the supplier."],
+ ["Class","A categorization of SKUs (e.g. A/B/C) based on their contribution to revenue or units sold, used to prioritize planning attention."],
+ ["Coefficient of Variation (CV)","The ratio of demand's standard deviation to its mean — a measure of how erratic a SKU's demand is. High-CV items need more safety stock and are harder to forecast."],
+ ["Cold Start","Forecasting demand for a product with little or no sales history (a new launch), typically by borrowing signal from similar items or a predecessor until real data accumulates."],
+ ["Components","The individual items that make up a bundle or assembly."],
+ ["Continuity Product","An item carried and replenished year-round rather than tied to a season or drop — the counterpart to seasonal product, and usually the bulk of a catalog."],
+ ["Cooling Trend","A signal showing a sustained decline in sales velocity over recent periods, indicating waning demand for a product."],
+ ["Cycle Stock","The working portion of inventory expected to sell between replenishment cycles, over and above safety stock — the part that turns over in normal trading."],
+ ["Days of Cover","The number of days current inventory is expected to last given the forecasted sales rate."],
+ ["Deadstock","Inventory that has recorded little to no sales activity over an extended period and is unlikely to sell through at full price."],
+ ["Demand","The underlying customer want for a product, estimated from sales, traffic, and other behavioral signals — independent of whether inventory was actually available to fulfill it."],
+ ["Discount Amount","The total value of markdowns applied to sales during the period — the difference between full price and the price actually paid."],
+ ["DSI (Days Sales of Inventory)","The average number of days inventory is held before it sells (365 ÷ turns) — the finance-side view of turnover, closely related to Days of Cover."],
+ ["EOQ (Economic Order Quantity)","The order quantity that minimizes the combined cost of ordering and holding inventory — the classic trade-off between ordering too often and carrying too much."],
+ ["Excess & Obsolete (E&O)","Inventory beyond foreseeable demand (excess) or no longer sellable at full price (obsolete) — the write-down and liquidation risk carried on the balance sheet. The finance-standard umbrella over deadstock and overstock."],
+ ["Fill Rate","The percentage of demand met from stock on hand without a stockout or backorder — a core customer-service metric. Contrast OTIF, which measures a supplier's delivery to you."],
+ ["Forecast Accuracy","The plain-language flip of a forecast error metric, usually expressed as 1 − error (e.g. 100% − WMAPE) so higher is better. The number most often reported to the business."],
+ ["Forecast Bias","The average signed error (forecast − actual). Persistent positive bias means chronic over-forecasting (excess stock); negative means under-forecasting (stockouts). Distinct from accuracy, which ignores direction."],
+ ["Forecast Horizon","How far into the future the forecast projects (e.g. the next 12 weeks). It's normally set to at least cover the lead time plus the review cycle so orders can be planned in time."],
+ ["Full-Price Sell-Through","The share of units sold at full price before any markdown — a margin-health signal distinct from overall sell-through, which counts discounted units too."],
+ ["Ghost Revenue","Estimated revenue that would have been earned if a product hadn't been out of stock or otherwise unavailable to sell — a proxy for demand the business failed to capture."],
+ ["GMROI (Gross Margin Return on Inventory Investment)","Gross margin dollars earned per dollar of average inventory invested (gross margin ÷ average inventory cost). The headline profitability-of-inventory metric buyers are measured on."],
+ ["Gross Sales","Total sales revenue before deducting discounts, returns, or taxes."],
+ ["Health Status","An overall indicator (e.g. Healthy, At Risk, Understocked, Overstocked) summarizing a SKU's inventory position relative to forecasted demand."],
+ ["Hidden Gems","Products showing strong underlying demand signals (e.g. high sell-through, low returns, healthy velocity) that are under-promoted or under-stocked relative to their potential."],
+ ["Impact Level","A relative indicator of how significant a SKU's replenishment recommendation is to overall business performance (e.g. based on revenue or margin contribution)."],
+ ["In Stock","Units of inventory currently on hand and available."],
+ ["Inventory Turnover (Turns)","How many times inventory is sold and replaced over a period, calculated as cost of goods sold ÷ average inventory value. Higher turns mean working capital is recycled faster."],
+ ["Landed Cost","The full cost of getting a unit into the warehouse — unit cost plus freight, duties, insurance, and handling. The correct basis for true unit margin."],
+ ["Last Stockout Date","The most recent date on which a SKU had zero or negative available inventory."],
+ ["Lead Time","The number of days between placing an order with a supplier and receiving it into stock."],
+ ["Line Plan","A more granular, bottom-up plan that translates the Merchandise Financial Plan into actual SKUs — specifying style count, color/size assortment, price points, and unit quantities by category. It's where the financial targets set in the MFP get turned into a concrete product assortment."],
+ ["Lost Revenue","Lost Sales multiplied by sell price — the estimated revenue forfeited due to stockouts."],
+ ["Lost Sales","Estimated units of demand that went unmet because a product was out of stock."],
+ ["MAE (Mean Absolute Error)","The average size of the forecast miss in units, ignoring whether it was over or under. Easy to interpret, but not comparable across SKUs of very different volumes."],
+ ["Manufacturing Orders","Orders to produce assemblies or kits from component stock."],
+ ["MAPE (Mean Absolute Percentage Error)","The average absolute percentage gap between forecast and actual demand across items or periods; lower is better. Simple to read, but it overweights errors on low-volume SKUs, so it can mislead on a long tail of slow sellers."],
+ ["Markdown Rate","Total markdown dollars as a percentage of sales (or of full-price value) — how much price was given up to clear stock. The rate behind the Discount Amount figure."],
+ ["MFP (Merchandise Financial Plan)","A top-down financial plan, typically built by month and by department/category, that sets planned sales, markdowns, receipts, and ending inventory targets against a target margin and turn. It's the financial 'guardrail' that line plans and buys must roll up into."],
+ ["MOQ (Minimum Order Quantity)","The smallest quantity a supplier will accept on a purchase order."],
+ ["MOV (Minimum Order Value)","The minimum total dollar value a supplier requires for a purchase order to be accepted."],
+ ["Net Sales","Gross Sales minus discounts and returns."],
+ ["On Order","Units that have been ordered from a supplier but not yet received into inventory."],
+ ["Open-To-Buy","The dollar or unit amount still needed to purchase in a given period without exceeding the plan, calculated as: OTB = Planned EOM stock + Planned sales + Planned markdowns − Beginning stock (BOM) − Stock already on order. It's essentially the 'budget remaining' for buyers to place new orders while staying aligned with the MFP."],
+ ["OTIF (On Time In Full)","The percentage of supplier orders delivered both on the agreed date and with the complete ordered quantity."],
+ ["Overstock","Inventory on hand that exceeds what's needed to cover forecasted demand through the planning period (lead time + days of cover), representing excess capital tied up in stock."],
+ ["Predecessor","An earlier SKU whose sales history is used as the forecasting baseline for a newer replacement SKU."],
+ ["Prepack","A pre-configured assortment of sizes or colors bundled together as a single ordering unit, common in apparel."],
+ ["Price Sensitivity","A measure of how much unit demand shifts in response to changes in a product's price."],
+ ["Pricing Resistance","A signal that sales velocity slows meaningfully at or above a given price point, indicating the market is pushing back against further price increases."],
+ ["Promotional Lift (Uplift)","The incremental demand a promotion generates above the baseline forecast — the units that would not have sold at full price."],
+ ["Purchase Orders","Orders placed with suppliers to replenish inventory."],
+ ["Quadrant","A 2x2 classification (e.g. velocity vs. margin) used to group SKUs into strategic buckets for replenishment prioritization."],
+ ["Quantile (Probabilistic) Forecast","A forecast that predicts a range of possible demand outcomes with probabilities (e.g. the 50th and 90th percentiles) rather than a single number, so safety stock and service levels can be set to a chosen confidence."],
+ ["Recommended Quantity","The system-generated order quantity suggested to meet forecasted demand through the next planning period."],
+ ["Reorder Point (ROP)","The inventory level at which a replenishment order should be placed — typically expected demand over the lead time plus safety stock — so new stock arrives before the SKU runs out."],
+ ["Replenishment Policies","The configured rules — such as lead time, safety stock, and review cycle — that govern how replenishment recommendations are calculated for a SKU or category."],
+ ["Return Amount","The total dollar value of merchandise sent back by customers during the period."],
+ ["Returned Rate","Returned Units divided by units sold, expressed as a percentage."],
+ ["Returned Units","The number of units sent back by customers during the period."],
+ ["RMSE (Root Mean Squared Error)","Like MAE but squares each error before averaging, so large misses are penalized far more heavily. Useful when a few big errors (a spike or a stockout) matter most."],
+ ["Safety Stock","A buffer quantity held in addition to forecasted demand to protect against variability in demand or lead time."],
+ ["Sales Channel","The specific platform or storefront through which a sale occurred (e.g. DTC website, wholesale, Amazon, retail)."],
+ ["Sales Velocity (Last 30 Days)","The average rate of units sold per day over the trailing 30-day period, typically excluding days the item was out of stock."],
+ ["Seasonality (Seasonal Index)","A repeating, calendar-driven pattern in demand (holidays, weather, back-to-school). A seasonal index scales the baseline forecast up or down by period to reflect it."],
+ ["Sell Price","The price at which a unit is sold to the end customer."],
+ ["Sell-Through Rate","Units sold during the period divided by (units sold + ending inventory) — the share of available stock that actually sold through."],
+ ["Service Level","The target probability of NOT stocking out during a replenishment cycle (e.g. 95%). It's the assumption that sets how much safety stock to hold — higher service level, more buffer."],
+ ["Shelf Warmer","A product that has sat in stock for an extended period with minimal sales velocity, signaling weak demand relative to the inventory invested in it."],
+ ["Stock on Hand","The current physical quantity of a SKU held in inventory."],
+ ["Stock Value","The monetary value of inventory on hand, calculated as units in stock × unit cost."],
+ ["Stock-to-Sales Ratio","Beginning-of-period inventory divided by that period's sales — a planning ratio used in the Merchandise Financial Plan to set how much stock to receive and when."],
+ ["Stockout","A SKU/location with zero or negative available inventory, meaning it cannot fulfill demand until replenished."],
+ ["Successor","A newer SKU designated to carry forward the sales history and forecast of a prior, now-discontinued SKU."],
+ ["Taxes","Total tax collected on sales during the period."],
+ ["Total Sales","Net Sales plus taxes and any shipping charges — the full amount billed to customers."],
+ ["Tracking Signal","A running measure of cumulative bias relative to average error, used to flag when a forecast has drifted out of line and needs re-tuning."],
+ ["Transfer Orders","Orders that move inventory between warehouses or locations rather than ordering from a supplier."],
+ ["Understock","Inventory on hand that falls short of what's needed to cover forecasted demand through the planning period, putting the SKU at risk of stocking out."],
+ ["Unit Cost","The cost paid to the supplier for a single unit, excluding freight and duties unless landed cost is used."],
+ ["Weeks of Supply (WOS)","How many weeks current inventory will last at the current sales rate — the retail/apparel-standard cousin of Days of Cover, and the basis for stock-to-sales targets."],
+ ["WMAPE (Weighted MAPE)","MAPE weighted by volume (total absolute error ÷ total actual units), so high-selling SKUs count more than slow ones. The more reliable headline accuracy number for a mixed catalog."]
+].map(([term, def], i) => ({ id: i, term, def }));
+
+/* ---------- deterministic-ish RNG seeded from time only at load ---------- */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+const firstLetter = t => t.term[0].toUpperCase();
+
+/* ---------- ambient sparkline ---------- */
+(function drawSpark(){
+  const W=132,H=52,n=16,base=[];
+  let v=26;
+  for(let i=0;i<n;i++){ v += (Math.sin(i*0.9)*4) + (Math.random()*6-3); v=Math.max(8,Math.min(44,v)); base.push(v); }
+  const fc = base.map((y,i)=> y + Math.sin(i*0.6)*5 + (i>n-5? (i-(n-5))*3:0));
+  const toPts = ys => ys.map((y,i)=> `${(i/(n-1)*W).toFixed(1)},${(H-y).toFixed(1)}`).join(' ');
+  document.getElementById('sparkA').setAttribute('points', toPts(base));
+  document.getElementById('sparkB').setAttribute('points', toPts(fc));
+  const lastX=W, lastY=H-fc[n-1];
+  const dot=document.getElementById('sparkDot'); dot.setAttribute('cx',lastX-1); dot.setAttribute('cy',lastY);
+})();
+
+/* ---------- state ---------- */
+const S = {
+  order: shuffle(TERMS.map(t=>t.id)),
+  pos: 0,
+  known: new Set(),
+  review: new Set(),
+  quiz: { correct: 0, answered: 0, total: 12, seq: [], qi: 0, locked: false }
+};
+
+/* ---------- scoreboard ---------- */
+function renderBoard(){
+  document.getElementById('sDeck').textContent = TERMS.length;
+  document.getElementById('sMastered').innerHTML = `${S.known.size}<small> / ${TERMS.length}</small>`;
+  const q = S.quiz;
+  document.getElementById('sAcc').textContent = q.answered ? Math.round(q.correct/q.answered*100)+'%' : '—';
+}
+
+/* ---------- streak (quiz) ---------- */
+let streak = 0;
+function setStreak(n){
+  streak = n;
+  document.getElementById('sStreak').innerHTML = `${n}<small> velocity</small>`;
+}
+
+/* ================= FLASHCARDS ================= */
+const flip = document.getElementById('flip');
+function currentCard(){ return TERMS[S.order[S.pos]]; }
+function renderFlash(){
+  const c = currentCard();
+  const L = firstLetter(c);
+  document.getElementById('fLetterF').textContent = L;
+  document.getElementById('fLetterB').textContent = L;
+  document.getElementById('fTerm').textContent = c.term;
+  document.getElementById('fTermBack').textContent = c.term;
+  document.getElementById('fDef').textContent = c.def;
+  const idx = `${String(S.pos+1).padStart(2,'0')} / ${TERMS.length}`;
+  document.getElementById('fIndexF').textContent = idx;
+  document.getElementById('fIndexB').textContent = idx;
+  flip.classList.remove('flipped');
+  const status = S.known.has(c.id) ? '✓ mastered' : (S.review.has(c.id) ? '↻ marked to study again' : 'not yet reviewed');
+  document.getElementById('fCounter').textContent = `${status}  ·  ${S.known.size} mastered · ${S.review.size} in review pile`;
+  renderBoard();
+}
+flip.addEventListener('click', ()=> flip.classList.toggle('flipped'));
+function step(d){ S.pos = (S.pos + d + TERMS.length) % TERMS.length; renderFlash(); }
+document.getElementById('fNext').onclick = ()=> step(1);
+document.getElementById('fPrev').onclick = ()=> step(-1);
+document.getElementById('fKnown').onclick = ()=>{ const c=currentCard(); S.known.add(c.id); S.review.delete(c.id); step(1); };
+document.getElementById('fReview').onclick = ()=>{ const c=currentCard(); S.review.add(c.id); S.known.delete(c.id); step(1); };
+document.getElementById('fShuffle').onclick = ()=>{ S.order = shuffle(TERMS.map(t=>t.id)); S.pos=0; renderFlash(); };
+document.getElementById('fReset').onclick = ()=>{ S.known.clear(); S.review.clear(); S.pos=0; renderFlash(); };
+
+/* ================= QUIZ ================= */
+const LETTERS = ['A','B','C','D'];
+function buildQuiz(){
+  const q = S.quiz;
+  q.correct = 0; q.answered = 0; q.qi = 0; q.locked = false;
+  q.seq = shuffle(TERMS.map(t=>t.id)).slice(0, q.total);
+  setStreak(0);
+  document.getElementById('quizDone').style.display='none';
+  document.getElementById('quizLive').style.display='block';
+  renderQuestion();
+}
+function renderQuestion(){
+  const q = S.quiz;
+  const target = TERMS[q.seq[q.qi]];
+  // distractors
+  const pool = shuffle(TERMS.filter(t=>t.id!==target.id)).slice(0,3);
+  const choices = shuffle([target, ...pool]);
+  q.locked = false;
+  q.currentTarget = target.id;
+
+  document.getElementById('qNum').textContent = q.qi+1;
+  document.getElementById('qOf').textContent = `Question ${q.qi+1} of ${q.total}`;
+  document.getElementById('qDef').textContent = target.def;
+  document.getElementById('qBar').style.width = (q.qi/q.total*100)+'%';
+  document.getElementById('qScore').textContent = `Score ${q.correct} / ${q.answered}`;
+
+  const box = document.getElementById('qOptions');
+  box.innerHTML='';
+  choices.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='opt';
+    b.innerHTML = `<span class="key">${LETTERS[i]}</span><span>${c.term}</span>`;
+    b.onclick = ()=> answer(b, c.id, box);
+    box.appendChild(b);
+  });
+  const fb=document.getElementById('qFeedback'); fb.className='feedback'; fb.innerHTML='';
+  document.getElementById('qNext').style.display='none';
+}
+function answer(btn, chosenId, box){
+  const q=S.quiz;
+  if(q.locked) return;
+  q.locked = true;
+  q.answered++;
+  const correct = chosenId === q.currentTarget;
+  const targetTerm = TERMS[q.currentTarget].term;
+  [...box.children].forEach(b=>{
+    b.disabled=true;
+    const term = b.querySelector('span:last-child').textContent;
+    if(term===targetTerm) b.classList.add('correct');
+    else b.classList.add('dim');
+  });
+  const fb=document.getElementById('qFeedback');
+  if(correct){
+    q.correct++; setStreak(streak+1);
+    btn.classList.remove('dim'); btn.classList.add('correct');
+    fb.className='feedback show ok';
+    fb.innerHTML = `<b>Correct.</b> ${streak>=3? 'Streak of '+streak+' — velocity is climbing.' : 'On to the next.'}`;
+  } else {
+    setStreak(0);
+    btn.classList.remove('dim'); btn.classList.add('wrong');
+    fb.className='feedback show no';
+    fb.innerHTML = `<b>Not quite.</b> The answer is <b>${targetTerm}</b>.`;
+  }
+  document.getElementById('qScore').textContent = `Score ${q.correct} / ${q.answered}`;
+  document.getElementById('qBar').style.width = ((q.qi+1)/q.total*100)+'%';
+  const nx=document.getElementById('qNext');
+  nx.style.display='inline-block';
+  nx.textContent = (q.qi+1>=q.total) ? 'See results →' : 'Next question →';
+  renderBoard();
+}
+document.getElementById('qNext').onclick = ()=>{
+  const q=S.quiz;
+  if(q.qi+1>=q.total){ finishQuiz(); }
+  else { q.qi++; renderQuestion(); }
+};
+function finishQuiz(){
+  const q=S.quiz;
+  const pct = q.total ? Math.round(q.correct/q.total*100) : 0;
+  document.getElementById('quizLive').style.display='none';
+  const done=document.getElementById('quizDone'); done.style.display='block';
+  document.getElementById('qFinal').textContent = pct+'%';
+  let grade, msg;
+  if(pct>=90){ grade='Health status: Healthy'; msg=`${q.correct} of ${q.total}. You're carrying full coverage on this vocabulary.`; }
+  else if(pct>=70){ grade='Health status: At Risk'; msg=`${q.correct} of ${q.total}. Solid, with a few SKUs running low — another pass will top you up.`; }
+  else if(pct>=50){ grade='Health status: Understocked'; msg=`${q.correct} of ${q.total}. Time to replenish — run the flashcards on the terms you missed.`; }
+  else { grade='Health status: Stockout'; msg=`${q.correct} of ${q.total}. Start with flashcards to build a baseline, then come back.`; }
+  document.getElementById('qGrade').textContent = grade;
+  document.getElementById('qMsg').textContent = msg;
+  // set up leaderboard save
+  S.quiz.pending = { pct, correct: q.correct, total: q.total };
+  document.getElementById('qSavedNote').style.display = 'none';
+  document.getElementById('qSave').style.display = 'flex';
+  document.getElementById('qInitials').value = lastName;
+  renderBoard();
+}
+document.getElementById('qAgain').onclick = buildQuiz;
+document.getElementById('qToFlash').onclick = ()=> selectTab('flash');
+
+/* ================= LEADERBOARD (shared, via /api/scores) ================= */
+const API = '/api/scores', NAME_KEY='tightly-glossary-name';
+function safeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lbSort(list){ return list.slice().sort((a,b)=> b.pct-a.pct || b.correct-a.correct || b.ts-a.ts); }
+let lastName = safeGet(NAME_KEY) || '';
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const lbBody = ()=> document.getElementById('lbBody');
+function lbState(kind, msg){
+  document.getElementById('lbCount').textContent = kind==='ok' ? '' : (kind==='loading' ? 'loading…' : '');
+  lbBody().innerHTML = `<div class="lb-empty"><div class="mono">${kind==='loading'?'Loading':'Heads up'}</div><p>${msg}</p></div>`;
+}
+
+function renderLB(list, highlightTs){
+  document.getElementById('lbCount').textContent = `${list.length} run${list.length===1?'':'s'}`;
+  if(!list.length){
+    lbBody().innerHTML = `<div class="lb-empty"><div class="mono">No runs yet</div><p>Finish a Recall Quiz and save your score to open the board for the team.</p></div>`;
+    return;
+  }
+  const rows = lbSort(list).map((e,i)=>{
+    const rank=i+1;
+    const cls = (highlightTs && e.ts===highlightTs) ? 'you' : '';
+    const rankCls = rank<=3 ? `rank-${rank}` : '';
+    const badge = rank<=3 ? `<span class="rank-badge">${rank}</span>` : rank;
+    const band = e.pct>=90?'good':(e.pct>=70?'mid':'low');
+    const d = new Date(e.ts);
+    const date = isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    return `<tr class="${cls} ${rankCls}">
+      <td class="rank">${badge}</td>
+      <td class="who">${escapeHtml(e.name)}</td>
+      <td class="num"><span class="pct ${band}">${e.pct}%</span></td>
+      <td class="num lb-sub">${e.correct}/${e.total}</td>
+      <td class="num lb-sub">${date}</td>
+    </tr>`;
+  }).join('');
+  lbBody().innerHTML = `<table class="lb"><thead><tr>
+      <th class="rank">#</th><th>Player</th><th class="num">Score</th><th class="num">Correct</th><th class="num">Date</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function refreshBoard(highlightTs){
+  lbState('loading','Fetching the latest team scores.');
+  try{
+    const r = await fetch(API, { headers:{ accept:'application/json' } });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const list = await r.json();
+    renderLB(Array.isArray(list)?list:[], highlightTs);
+  }catch(e){
+    lbState('error','Could not reach the leaderboard service. Check your connection and hit Refresh.');
+  }
+}
+
+document.getElementById('qSaveBtn').onclick = async ()=>{
+  const q=S.quiz; if(!q.pending) return;
+  const btn = document.getElementById('qSaveBtn');
+  const name = (document.getElementById('qInitials').value||'').trim().slice(0,24) || 'Player';
+  lastName = name; safeSet(NAME_KEY, name);
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const note = document.getElementById('qSavedNote');
+  try{
+    const r = await fetch(API, {
+      method:'POST', headers:{ 'content-type':'application/json' },
+      body: JSON.stringify({ name, pct:q.pending.pct, correct:q.pending.correct, total:q.pending.total })
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    const board = data.board || [];
+    const rank = lbSort(board).findIndex(e=>e.ts===data.ts) + 1;
+    document.getElementById('qSave').style.display='none';
+    note.style.display='block';
+    if(rank>=1){ note.className='saved-note'; note.textContent = `Logged as ${name} — #${rank} on the team board.`; }
+    else { note.className='saved-note plain'; note.textContent = `Logged as ${name}. Not in the top 100 this time — run it back.`; }
+    q.pending = null;
+    renderLB(board, data.ts);
+  }catch(e){
+    note.style.display='block'; note.className='saved-note plain';
+    note.textContent = 'Could not save to the team board — check your connection and try again.';
+    btn.disabled = false; btn.textContent = 'Save to leaderboard';
+  }
+};
+document.getElementById('qViewBoard').onclick = ()=> selectTab('board');
+document.getElementById('lbRefresh').onclick = ()=> refreshBoard();
+
+/* ================= tabs ================= */
+function selectTab(which){
+  document.getElementById('tabFlash').setAttribute('aria-selected', which==='flash');
+  document.getElementById('tabQuiz').setAttribute('aria-selected', which==='quiz');
+  document.getElementById('tabBoard').setAttribute('aria-selected', which==='board');
+  document.getElementById('flashPane').style.display = which==='flash'?'block':'none';
+  document.getElementById('quizPane').style.display = which==='quiz'?'block':'none';
+  document.getElementById('boardPane').style.display = which==='board'?'block':'none';
+  if(which==='quiz' && S.quiz.seq.length===0) buildQuiz();
+  if(which==='board') refreshBoard();
+}
+document.getElementById('tabFlash').onclick = ()=> selectTab('flash');
+document.getElementById('tabQuiz').onclick = ()=> selectTab('quiz');
+document.getElementById('tabBoard').onclick = ()=> selectTab('board');
+
+/* keyboard: quiz answers + flashcard nav */
+document.addEventListener('keydown', e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input' || tag==='textarea'){
+    if(e.key==='Enter' && e.target.id==='qInitials'){ e.preventDefault(); document.getElementById('qSaveBtn').click(); }
+    return;
+  }
+  const quizOpen = document.getElementById('quizPane').style.display!=='none';
+  const flashOpen = document.getElementById('flashPane').style.display!=='none';
+  if(quizOpen){
+    if(['1','2','3','4','a','b','c','d','A','B','C','D'].includes(e.key)){
+      const map={'1':0,'2':1,'3':2,'4':3,'a':0,'b':1,'c':2,'d':3,'A':0,'B':1,'C':2,'D':3};
+      const btns=document.getElementById('qOptions').children;
+      if(btns[map[e.key]] && !S.quiz.locked) btns[map[e.key]].click();
+    }
+    if((e.key==='Enter'||e.key===' ') && S.quiz.locked){ e.preventDefault(); document.getElementById('qNext').click(); }
+  } else if(flashOpen){
+    if(e.key==='ArrowRight') step(1);
+    else if(e.key==='ArrowLeft') step(-1);
+    else if(e.key===' '){ e.preventDefault(); flip.classList.toggle('flipped'); }
+  }
+});
+
+renderFlash();
+setStreak(0);
+renderBoard();
+</script>
