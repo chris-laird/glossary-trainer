@@ -268,8 +268,8 @@
 
   /* ---------- Leaderboard ---------- */
   #boardPane { display: none; }
-  .lb-wrap { padding: 6px 0 4px; }
-  table.lb { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .lb-wrap { padding: 6px 0 4px; overflow-x: auto; }
+  table.lb { width: 100%; min-width: 480px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   table.lb th {
     font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
     color: var(--ink-faint); font-weight: 600; text-align: left; padding: 6px 16px 10px;
@@ -628,6 +628,7 @@ const LETTERS = ['A','B','C','D'];
 function buildQuiz(){
   const q = S.quiz;
   q.correct = 0; q.answered = 0; q.qi = 0; q.locked = false;
+  q.startedAt = Date.now(); q.endedAt = null;
   q.seq = shuffle(TERMS.map(t=>t.id)).slice(0, q.total);
   setStreak(0);
   document.getElementById('quizDone').style.display='none';
@@ -690,6 +691,7 @@ function answer(btn, chosenId, box){
   const nx=document.getElementById('qNext');
   nx.style.display='inline-block';
   nx.textContent = (q.qi+1>=q.total) ? 'See results →' : 'Next question →';
+  if(q.qi+1>=q.total) q.endedAt = Date.now();
   renderBoard();
 }
 document.getElementById('qNext').onclick = ()=>{
@@ -700,6 +702,7 @@ document.getElementById('qNext').onclick = ()=>{
 function finishQuiz(){
   const q=S.quiz;
   const pct = q.total ? Math.round(q.correct/q.total*100) : 0;
+  const ms = Math.max(0, (q.endedAt || Date.now()) - (q.startedAt || Date.now()));
   document.getElementById('quizLive').style.display='none';
   const done=document.getElementById('quizDone'); done.style.display='block';
   document.getElementById('qFinal').textContent = pct+'%';
@@ -709,9 +712,9 @@ function finishQuiz(){
   else if(pct>=50){ grade='Health status: Understocked'; msg=`${q.correct} of ${q.total}. Time to replenish — run the flashcards on the terms you missed.`; }
   else { grade='Health status: Stockout'; msg=`${q.correct} of ${q.total}. Start with flashcards to build a baseline, then come back.`; }
   document.getElementById('qGrade').textContent = grade;
-  document.getElementById('qMsg').textContent = msg;
+  document.getElementById('qMsg').textContent = msg + `  ·  Finished in ${fmtTime(ms)}.`;
   // set up leaderboard save
-  S.quiz.pending = { pct, correct: q.correct, total: q.total };
+  S.quiz.pending = { pct, correct: q.correct, total: q.total, ms };
   document.getElementById('qSavedNote').style.display = 'none';
   document.getElementById('qSave').style.display = 'flex';
   document.getElementById('qInitials').value = lastName;
@@ -724,7 +727,8 @@ document.getElementById('qToFlash').onclick = ()=> selectTab('flash');
 const API = '/api/scores', NAME_KEY='tightly-glossary-name';
 function safeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-function lbSort(list){ return list.slice().sort((a,b)=> b.pct-a.pct || b.correct-a.correct || b.ts-a.ts); }
+function lbSort(list){ return list.slice().sort((a,b)=> b.pct-a.pct || b.correct-a.correct || ((a.ms??Infinity)-(b.ms??Infinity)) || a.ts-b.ts); }
+function fmtTime(ms){ if(ms==null || !isFinite(ms)) return '—'; const s=Math.round(ms/1000); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 let lastName = safeGet(NAME_KEY) || '';
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -753,11 +757,12 @@ function renderLB(list, highlightTs){
       <td class="who">${escapeHtml(e.name)}</td>
       <td class="num"><span class="pct ${band}">${e.pct}%</span></td>
       <td class="num lb-sub">${e.correct}/${e.total}</td>
+      <td class="num lb-sub">${fmtTime(e.ms)}</td>
       <td class="num lb-sub">${date}</td>
     </tr>`;
   }).join('');
   lbBody().innerHTML = `<table class="lb"><thead><tr>
-      <th class="rank">#</th><th>Player</th><th class="num">Score</th><th class="num">Correct</th><th class="num">Date</th>
+      <th class="rank">#</th><th>Player</th><th class="num">Score</th><th class="num">Correct</th><th class="num">Time</th><th class="num">Date</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -783,7 +788,7 @@ document.getElementById('qSaveBtn').onclick = async ()=>{
   try{
     const r = await fetch(API, {
       method:'POST', headers:{ 'content-type':'application/json' },
-      body: JSON.stringify({ name, pct:q.pending.pct, correct:q.pending.correct, total:q.pending.total })
+      body: JSON.stringify({ name, pct:q.pending.pct, correct:q.pending.correct, total:q.pending.total, ms:q.pending.ms })
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data = await r.json();

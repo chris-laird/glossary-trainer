@@ -19,7 +19,15 @@ function getClient() {
 }
 
 const sortBoard = (list) =>
-  list.slice().sort((a, b) => b.pct - a.pct || b.correct - a.correct || b.ts - a.ts);
+  list
+    .slice()
+    .sort(
+      (a, b) =>
+        b.pct - a.pct ||
+        b.correct - a.correct ||
+        (a.ms ?? Infinity) - (b.ms ?? Infinity) ||
+        a.ts - b.ts
+    );
 
 async function readBoard() {
   const raw = await getClient().get(KEY);
@@ -51,7 +59,12 @@ export default async function handler(req, res) {
       const total = clampInt(body.total, 1, 500);
       const correct = clampInt(body.correct, 0, total);
       const pct = clampInt(body.pct, 0, 100);
-      const entry = { name, pct, correct, total, ts: Date.now() };
+      // Completion time in ms (tiebreaker). Null if absent/invalid so it never
+      // wins a tie by accident; capped at 24h.
+      let ms = Math.round(Number(body.ms));
+      if (!Number.isFinite(ms) || ms <= 0) ms = null;
+      else ms = Math.min(ms, 86400000);
+      const entry = { name, pct, correct, total, ms, ts: Date.now() };
 
       const board = await readBoard();
       board.push(entry);
